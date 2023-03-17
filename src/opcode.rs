@@ -29,6 +29,11 @@ impl Opcode {
         }
     }
 
+    /// Execute the opcode in the given evm execution context
+    ///
+    /// # Arguments
+    ///
+    /// * `evm` - Instance of the evm execution
     pub fn execute(&self, evm: &mut Evm) -> Result<(), &'static str> {
         match self {
             Opcode::STOP => Err("STOP"),
@@ -67,9 +72,9 @@ fn mul(evm: &mut Evm) -> Result<(), &'static str> {
 fn push1(evm: &mut Evm) -> Result<(), &'static str> {
     let start = evm.pc + 1;
     let end = start + 1;
-    let value = evm.bytecode[start..end]
+    let value = evm.code[start..end]
         .iter()
-        .fold(0, |acc, &x| acc * 256 + x as u64);
+        .fold(0, |acc, &x| acc * 256 + x as u32);
     evm.stack_push(value);
     evm.log(&format!("PUSH1({})", value));
     evm.pc = end;
@@ -93,8 +98,6 @@ pub fn parse_bytecode(bytecode_str: &str) -> Result<Vec<u8>, &str> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_opcode_parsing() {
         // TODO .. test hex to Opcode

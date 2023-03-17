@@ -1,7 +1,5 @@
 use clap::{Arg, Command};
-use crossterm::{
-    event::{read, Event, KeyCode},
-};
+use crossterm::event::{read, Event, KeyCode};
 
 /// Builds the CLI configuration using clap
 ///
@@ -25,7 +23,7 @@ pub fn create_cli() -> clap::Command {
             Arg::new("verbose")
                 .short('v')
                 .long("verbose")
-                .default_value("true")
+                .default_value("false")
                 .num_args(0)
                 .help("Enable logging of EVM operations"),
         )
@@ -33,12 +31,17 @@ pub fn create_cli() -> clap::Command {
             Arg::new("step")
                 .short('s')
                 .long("step")
-                .default_value("true")
+                .default_value("false")
                 .num_args(0)
                 .help("Enable step by step execution (useful with -v)"),
         )
 }
 
+/// Blocking read until 'key' is entered
+///
+/// # Arguments
+///
+/// * `key` - The character to wait for
 pub fn wait_for_press(key: &char) {
     loop {
         if let Ok(event) = read() {

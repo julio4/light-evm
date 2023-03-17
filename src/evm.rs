@@ -1,12 +1,16 @@
 use crate::opcode::Opcode;
-use crate::cli::{wait_for_press};
+use crate::cli::wait_for_press;
 
 /// The EVM interpreter, responsible for executing Ethereum bytecode.
 pub struct Evm {
-    pub stack: Vec<u64>,
+    pub stack: Vec<u32>,
     pub memory: Vec<u8>,
     pub pc: usize,
-    pub bytecode: Vec<u8>,
+    pub code: Vec<u8>,
+    // pub storage
+    // pub calldata
+    // pub returndata
+    // Used for logs
     pub logs: bool,
     pub step_by_step: bool,
 }
@@ -16,29 +20,19 @@ impl Evm {
     ///
     /// # Arguments
     ///
-    /// * `bytecode` - A vector of bytes representing the Ethereum bytecode.
+    /// * `code` - A vector of bytes representing the Contract bytecode.
     /// * `logs` - A boolean flag indicating whether to enable logging for EVM operations.
     /// * `step_by_step` - A boolean flag indicating whether to enable step_by_step execution
-    pub fn new(bytecode: Vec<u8>, logs: bool, step_by_step: bool) -> Self {
+    pub fn new(code: Vec<u8>, logs: bool, step_by_step: bool) -> Self {
         Self {
             stack: Vec::new(),
             memory: Vec::new(),
             pc: 0,
-            bytecode,
+            code,
             logs,
             step_by_step
         }
     }
-
-    /// Get the corresponding opcode of a byte
-    ///
-    /// # Arguments
-    ///
-    /// * `value` - A byte that match an opcode
-    ///
-    /// # Returns
-    ///
-    /// * An option containing the Opcode
 
     /// Step in the execution. Get and execute the next opcode.
     pub fn step(&mut self) -> Result<(), &'static str> {
@@ -61,17 +55,29 @@ impl Evm {
     ///
     /// * An option containing the Opcode
     pub fn next_opcode(&self) -> Result<Opcode, &'static str> {
-        self.bytecode
+        self.code
             .get(self.pc)
             .and_then(Opcode::from)
             .ok_or("Invalid opcode")
     }
 
-    pub fn stack_push(&mut self, value: u64) {
+    /// Add value to stack
+    /// [...] -> [..., value]
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - the value to add
+    pub fn stack_push(&mut self, value: u32) {
         self.stack.push(value);
     }
 
-    pub fn stack_pop(&mut self) -> Result<u64, &'static str> {
+    /// Pop value from stack 
+    /// [..., x] -> [...]
+    ///
+    /// # Returns
+    ///
+    /// * An option containing the top value of the stack
+    pub fn stack_pop(&mut self) -> Result<u32, &'static str> {
         self.stack.pop().ok_or("Stack underflow")
     }
 
@@ -90,6 +96,10 @@ impl Evm {
     }
 
     /// helper function to log a msg
+    ///
+    /// # Arguments
+    ///
+    /// * `msg` - the message to log
     pub fn log(&self, msg: &str) {
         if self.logs {
             println!("{msg}");
@@ -133,7 +143,7 @@ impl Evm {
         println!("Bytecode:");
 
         // Print the bytecode in its raw form
-        for (index, byte) in self.bytecode.iter().enumerate() {
+        for (index, byte) in self.code.iter().enumerate() {
             print!("{:02x} ", byte);
             if (index + 1) % 16 == 0 {
                 println!();
